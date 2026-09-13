@@ -87,13 +87,56 @@ function addApple() {
   );
 }
 
+const propNames = ['TNT', '钻石剑', '火把', '金苹果'];
 const makers = [addTnt, addSword, addTorch, addApple];
 makers.forEach((make, i) => {
   const angle = (i / makers.length) * Math.PI * 2;
   const obj = make();
   obj.position.set(Math.cos(angle) * 2.1, 0.7, Math.sin(angle) * 2.1);
   obj.lookAt(0, obj.position.y, 0);
+  obj.userData.name = propNames[i];
   items.add(obj);
+});
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let highlighted = null;
+
+function getAllMeshes(obj) {
+  const meshes = [];
+  obj.traverse(o => { if (o.isMesh) meshes.push(o); });
+  return meshes;
+}
+
+function setHighlight(obj, on) {
+  getAllMeshes(obj).forEach(m => {
+    if (!m.material.emissive) return;
+    if (on) {
+      if (m.userData._origEmissive === undefined) {
+        m.userData._origEmissive = m.material.emissiveIntensity || 0;
+      }
+      m.material.emissiveIntensity = m.userData._origEmissive + 0.8;
+    } else {
+      m.material.emissiveIntensity = m.userData._origEmissive ?? 0;
+    }
+  });
+}
+
+renderer.domElement.addEventListener('click', (event) => {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(items.children, true);
+  if (hits.length > 0) {
+    let target = hits[0].object;
+    while (target.parent && target.parent !== items) target = target.parent;
+    if (highlighted === target) return;
+    if (highlighted) setHighlight(highlighted, false);
+    highlighted = target;
+    setHighlight(target, true);
+  } else {
+    if (highlighted) { setHighlight(highlighted, false); highlighted = null; }
+  }
 });
 
 const clock = new THREE.Clock();
