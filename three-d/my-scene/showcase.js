@@ -114,10 +114,13 @@ function setHighlight(obj, on) {
     if (on) {
       if (m.userData._origEmissive === undefined) {
         m.userData._origEmissive = m.material.emissiveIntensity || 0;
+        m.userData._origEmissiveColor = m.material.emissive.getHex();
       }
-      m.material.emissiveIntensity = m.userData._origEmissive + 0.8;
+      m.material.emissive.copy(m.material.color);
+      m.material.emissiveIntensity = m.userData._origEmissive + 1.0;
     } else {
-      m.material.emissiveIntensity = m.userData._origEmissive ?? 0;
+      m.material.emissive.setHex(m.userData._origEmissiveColor);
+      m.material.emissiveIntensity = m.userData._origEmissive;
     }
   });
 }
